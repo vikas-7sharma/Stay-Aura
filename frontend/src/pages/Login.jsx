@@ -46,25 +46,28 @@ const Login = () => {
     try {
       setError("")
       await signInWithRedirect(auth, googleProvider)
-      // Execution pauses here — browser navigates to Google, then back to this page.
-      // The result is picked up in the useEffect below via getRedirectResult.
     } catch (error) {
-      setError(error.response?.data?.message || "Google login failed. Please try again.")
+      setError(error.message || "Google login failed. Please try again.")
     }
   }
 
   useEffect(() => {
     const handleRedirect = async () => {
       try {
+        console.log("Checking redirect result...")
         const result = await getRedirectResult(auth)
+        console.log("Redirect result:", result)
         if (result) {
           const { displayName, email } = result.user
           await axios.post(serverUrl + "/api/auth/google", { name: displayName, email }, { withCredentials: true })
           await getCurrentUser()
           navigate("/")
+        } else {
+          console.log("No redirect result found")
         }
       } catch (error) {
-        setError(error.response?.data?.message || "Google login failed. Please try again.")
+        console.error("Redirect error:", error)
+        setError(error.message || "Google login failed. Please try again.")
       }
     }
     handleRedirect()
@@ -84,7 +87,7 @@ const Login = () => {
       sm:px-10 flex flex-col gap-4">
 
         <h1 className="text-[22px] md:text-[28px] font-semibold text-gray-800">
-          Welcome to AirBnb
+          Welcome to Aura Stay
         </h1>
 
         <div className="flex flex-col gap-1">
