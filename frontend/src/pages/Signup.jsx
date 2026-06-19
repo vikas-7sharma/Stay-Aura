@@ -64,23 +64,28 @@ function Signup() {
   }
 
   useEffect(() => {
-    const handleRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth)
-        if (result) {
-          const { displayName, email } = result.user
-          const res = await axios.post(serverUrl + "/api/auth/google",
-            { name: displayName, email }, { withCredentials: true })
-          setUserData(res.data.user)
-          navigate("/")
-        }
-      } catch (error) {
-        setError(error.response?.data?.message || "Google signup failed. Please try again.")
+  const handleRedirect = async () => {
+    try {
+      console.log("Checking redirect result...")
+      const result = await getRedirectResult(auth)
+      console.log("Redirect result:", result)
+      if (result) {
+        const { displayName, email } = result.user
+        const res = await axios.post(serverUrl + "/api/auth/google",
+          { name: displayName, email }, { withCredentials: true })
+        setUserData(res.data.user)
+        navigate("/")
+      } else {
+        console.log("No redirect result found")
       }
+    } catch (error) {
+      console.error("Redirect error:", error)
+      setError(error.message || "Google signup failed. Please try again.")
     }
-    handleRedirect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }
+  handleRedirect()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [])
 
   const HintItem = ({ ok, text }) => (
     <p className={`text-[12px] flex items-center gap-1 ${ok ? "text-green-500" : "text-gray-400"}`}>
