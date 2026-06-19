@@ -1,5 +1,5 @@
 import React, { useContext } from "react"
-import Navbar from "../components/navbar"
+import Navbar from "../components/Navbar"
 import Card from "../components/Card"
 import { listingDataContext } from '../context/listingDataContext'
 import { FaInstagram, FaFacebookF, FaTwitter } from "react-icons/fa"
