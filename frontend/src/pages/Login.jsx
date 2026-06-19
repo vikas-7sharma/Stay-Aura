@@ -1,11 +1,11 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext } from "react";
 import { FaRegEye, FaRegEyeSlash, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import axios from "axios";
 import { authDataContext } from "../context/AuthContext";
 import { userDataContext } from "../context/UserContext";
 import { auth, googleProvider } from "../firebase";
-import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 
 const Login = () => {
   const navigate = useNavigate()
@@ -45,34 +45,16 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       setError("")
-      await signInWithRedirect(auth, googleProvider)
+      const result = await signInWithPopup(auth, googleProvider)
+      const { displayName, email } = result.user
+      await axios.post(serverUrl + "/api/auth/google", { name: displayName, email }, { withCredentials: true })
+      await getCurrentUser()
+      navigate("/")
     } catch (error) {
+      console.error("Google login error:", error)
       setError(error.message || "Google login failed. Please try again.")
     }
   }
-
-  useEffect(() => {
-    const handleRedirect = async () => {
-      try {
-        console.log("Checking redirect result...")
-        const result = await getRedirectResult(auth)
-        console.log("Redirect result:", result)
-        if (result) {
-          const { displayName, email } = result.user
-          await axios.post(serverUrl + "/api/auth/google", { name: displayName, email }, { withCredentials: true })
-          await getCurrentUser()
-          navigate("/")
-        } else {
-          console.log("No redirect result found")
-        }
-      } catch (error) {
-        console.error("Redirect error:", error)
-        setError(error.message || "Google login failed. Please try again.")
-      }
-    }
-    handleRedirect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">
