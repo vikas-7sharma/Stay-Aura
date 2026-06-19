@@ -1,11 +1,11 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { FaRegEye, FaRegEyeSlash, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import axios from "axios";
 import { authDataContext } from "../context/AuthContext";
 import { userDataContext } from "../context/UserContext";
 import { auth, googleProvider } from "../firebase";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult } from "firebase/auth";
 
 const Login = () => {
   const navigate = useNavigate()
@@ -45,15 +45,31 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       setError("")
-      const result = await signInWithPopup(auth, googleProvider)
-      const { displayName, email } = result.user
-      await axios.post(serverUrl + "/api/auth/google", { name: displayName, email }, { withCredentials: true })
-      await getCurrentUser()
-      navigate("/")
+      await signInWithRedirect(auth, googleProvider)
+      // Execution pauses here — browser navigates to Google, then back to this page.
+      // The result is picked up in the useEffect below via getRedirectResult.
     } catch (error) {
       setError(error.response?.data?.message || "Google login failed. Please try again.")
     }
   }
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth)
+        if (result) {
+          const { displayName, email } = result.user
+          await axios.post(serverUrl + "/api/auth/google", { name: displayName, email }, { withCredentials: true })
+          await getCurrentUser()
+          navigate("/")
+        }
+      } catch (error) {
+        setError(error.response?.data?.message || "Google login failed. Please try again.")
+      }
+    }
+    handleRedirect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">

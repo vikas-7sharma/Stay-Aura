@@ -1,11 +1,11 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { FaRegEye, FaRegEyeSlash, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import axios from "axios";
 import { authDataContext } from "../context/AuthContext";
 import { userDataContext } from "../context/UserContext";
 import { auth, googleProvider } from "../firebase";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult } from "firebase/auth";
 
 function Signup() {
   const navigate = useNavigate()
@@ -55,16 +55,32 @@ function Signup() {
   const handleGoogleSignup = async () => {
     try {
       setError("")
-      const result = await signInWithPopup(auth, googleProvider)
-      const { displayName, email } = result.user
-      const res = await axios.post(serverUrl + "/api/auth/google",
-        { name: displayName, email }, { withCredentials: true })
-      setUserData(res.data.user)
-      navigate("/")
+      await signInWithRedirect(auth, googleProvider)
+      // Execution pauses here — browser navigates to Google, then back to this page.
+      // The result is picked up in the useEffect below via getRedirectResult.
     } catch (error) {
       setError(error.response?.data?.message || "Google signup failed. Please try again.")
     }
   }
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth)
+        if (result) {
+          const { displayName, email } = result.user
+          const res = await axios.post(serverUrl + "/api/auth/google",
+            { name: displayName, email }, { withCredentials: true })
+          setUserData(res.data.user)
+          navigate("/")
+        }
+      } catch (error) {
+        setError(error.response?.data?.message || "Google signup failed. Please try again.")
+      }
+    }
+    handleRedirect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const HintItem = ({ ok, text }) => (
     <p className={`text-[12px] flex items-center gap-1 ${ok ? "text-green-500" : "text-gray-400"}`}>
