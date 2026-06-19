@@ -18,8 +18,20 @@ let port = process.env.PORT || 8000
 let app = express();
 app.use(cookieParser())
 app.use(express.json())
+
+const allowedOrigins = [
+   "http://localhost:5173",
+   "https://stay-aura.vercel.app"
+]
+
 app.use(cors({
-   origin:"http://localhost:5173",
+   origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+         callback(null, true)
+      } else {
+         callback(new Error("Not allowed by CORS"))
+      }
+   },
    credentials: true
 }));
 
