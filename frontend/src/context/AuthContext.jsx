@@ -5,7 +5,8 @@ export const authDataContext = createContext()
 
 function AuthContext({ children }) {
 
-    const serverUrl = "http://localhost:8000"
+    const serverUrl = import.meta.env.VITE_API_URL
+
     const [userData, setUserData] = useState(null)
     const [loading, setLoading] = useState(true)
 
